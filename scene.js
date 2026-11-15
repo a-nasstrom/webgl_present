@@ -95,7 +95,7 @@ void main() {
   vec4 mv = modelViewMatrix * vec4(pos, 1.0);
   gl_Position = projectionMatrix * mv;
 
-  float world = (0.09 + aSeed.z * 0.2) * mix(1.0, 0.62, f) * (1.0 + uPulse * 0.5);
+  float world = (0.09 + aSeed.z * 0.2) * mix(1.0, 0.78, f) * (1.0 + uPulse * 0.5);
   gl_PointSize = world * uScale / -mv.z;
 
   float edge = 1.0 - smoothstep(uBox.y - 1.6, uBox.y, abs(y));
@@ -225,10 +225,10 @@ function heartMesh() {
   geo.rotateZ(Math.PI);
   geo.scale(0.085, 0.085, 0.085);
   const mat = new THREE.MeshPhysicalMaterial({
-    color: 0xff2e6c, roughness: 0.22, metalness: 0.05,
+    color: 0xe8124f, roughness: 0.2, metalness: 0.05, envMapIntensity: 0.45,
     clearcoat: 1, clearcoatRoughness: 0.12,
-    sheen: 1, sheenColor: new THREE.Color(0xffb3cc), sheenRoughness: 0.4,
-    emissive: 0x6a0024, emissiveIntensity: 0.55,
+    sheen: 0.35, sheenColor: new THREE.Color(0xff9fbf), sheenRoughness: 0.5,
+    emissive: 0x5a001c, emissiveIntensity: 0.5,
   });
   return new THREE.Mesh(geo, mat);
 }
@@ -261,7 +261,7 @@ export function createScene(canvas) {
   scene.add(bg);
 
   // floating hearts
-  const N = isMobile ? 420 : 760;
+  const N = isMobile ? 620 : 900;
   const pos = new Float32Array(N * 3);
   const seed = new Float32Array(N * 4);
   for (let i = 0; i < N; i++) {

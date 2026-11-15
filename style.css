@@ -383,7 +383,7 @@ body.in-quest .progress { opacity: 1; }
 .final.revealed .final-date { opacity: 0; transition-delay: 0s; }
 .final .card { opacity: 0; transform: translateY(40px); transition: opacity 1.4s ease, transform 1.4s cubic-bezier(.2, .8, .2, 1); pointer-events: none; }
 .final.revealed .card { opacity: 1; transform: none; pointer-events: auto; }
-.letter { background: rgba(34, 8, 30, .5); max-width: 500px; }
+.letter { background: rgba(34, 8, 30, .4); max-width: 500px; -webkit-backdrop-filter: blur(8px) saturate(140%); backdrop-filter: blur(8px) saturate(140%); }
 .letter-body { text-align: left; }
 .letter-body p { font-size: 21px; line-height: 1.45; color: var(--ink-soft); text-wrap: pretty; }
 .letter-body p + p { margin-top: 12px; }
