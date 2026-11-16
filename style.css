@@ -191,11 +191,11 @@ body.in-quest .progress { opacity: 1; }
 }
 
 /* ---------- Q1: name ---------- */
-.slots { display: flex; justify-content: center; gap: 14px; }
+.slots { display: flex; justify-content: center; gap: 10px; }
 .slots span {
-  width: 54px; height: 64px;
+  width: 46px; height: 60px;
   border-bottom: 2px solid var(--glass-brd);
-  font-family: var(--script); font-size: 48px; line-height: 64px;
+  font-family: var(--script); font-size: 42px; line-height: 60px;
   color: var(--gold);
   text-shadow: 0 0 18px rgba(255, 213, 154, .55);
 }
@@ -410,4 +410,10 @@ body.in-quest .progress { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lheart .fl, .btn.primary::after, #petDog .ear { animation: none; }
+}
+
+.praise {
+  margin: 0 0 6px; font-size: 30px; line-height: 1.15; color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 213, 154, .45);
+  animation: dropIn .9s cubic-bezier(.2, 1.4, .4, 1) both;
 }

@@ -6,10 +6,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
 const WEDDING = { d: 26, m: 7, y: 2017 }; // month is 0-based
-const STORE_KEY = 'anya-quest-step';
+const STORE_KEY = 'anyuta-quest-v2';
 const HEART_PATH = 'M12 21s-7.5-4.6-10-9.3C.3 8.4 2.2 4 6.3 4c2.3 0 3.9 1.3 5.7 3.4C13.8 5.3 15.4 4 17.7 4 21.8 4 23.7 8.4 22 11.7 19.5 16.4 12 21 12 21z';
-const QUESTIONS = 6;
-const FINAL = 7;
+const QUESTIONS = 2;
+const DATE = 2;
+const FINAL = 3;
 
 const audio = createAudio();
 let scene = null;
@@ -42,7 +43,7 @@ function go(n) {
   document.body.classList.toggle('in-quest', n > 0 && n < FINAL);
   renderProgress();
   scene?.setMode(modeFor(n));
-  if (n !== 6) scene?.setWarmth(n === 0 ? 0 : (n - 1) * 0.06);
+  if (n !== DATE) scene?.setWarmth(n === 0 ? 0 : 0.08);
   if (!entered.has(n)) { entered.add(n); ENTER[n]?.(scr); }
 }
 
@@ -143,8 +144,8 @@ const ENTER = {};
 
 /* ---- 1. Name from hearts ---- */
 ENTER[1] = (scr) => {
-  const target = ['А', 'Н', 'Я'];
-  const letters = shuffle(['А', 'Н', 'Я', 'М', 'Л', 'Ю', 'Е', 'К']);
+  const target = ['А', 'Н', 'Ю', 'Т', 'А'];
+  const letters = shuffle(['А', 'Н', 'Ю', 'Т', 'А', 'Я', 'Л', 'М']);
   const field = $('#heartField', scr);
   const slots = $$('#nameSlots span', scr);
   const fb = $('#nameFb', scr);
@@ -183,170 +184,26 @@ ENTER[1] = (scr) => {
       burst(r.left + r.width / 2, r.top + r.height / 2, 7);
       scene?.pulse(0.4);
       idx++;
-      if (idx === 1) say(fb, 'Красивое начало…');
-      if (idx === 2) say(fb, 'Ещё одна буква ❤');
-      if (idx === 3) {
+      misses = 0;
+      const steps = ['Красивое начало…', 'Ещё, ещё… ❤', 'Уже почти! 🥰', 'Осталась одна буква…'];
+      if (idx < target.length) say(fb, steps[idx - 1]);
+      else {
         $$('.lheart', field).forEach((h) => { h.disabled = true; h.style.transition = 'opacity .8s'; h.style.opacity = '.25'; });
-        solve(1, 'Аня — самое любимое имя на свете ❤');
+        solve(1, 'Анюта ❤ Какая ты умница — справилась с заданием! А теперь — последний вопрос…');
       }
     } else {
       misses++;
       bd.classList.remove('no'); void bd.offsetWidth; bd.classList.add('no');
       audio.soft();
       if (idx === 0 && misses >= 2) say(fb, 'Подсказка: первая буква — как в слове «Ангел» 😇');
+      else if (idx > 0 && misses >= 2) say(fb, 'Подсказка: ' + 'АНЮТА'.slice(0, idx) + '… — дальше буква «' + target[idx] + '» 😉');
       else say(fb, wrongLines[misses % wrongLines.length]);
     }
   }
 };
 
-/* ---- 2. How much I love you ---- */
-ENTER[2] = (scr) => {
-  const range = $('#loveRange', scr);
-  const label = $('#loveLabel', scr);
-  const fb = $('#loveFb', scr);
-  let max = +range.value;
-  let warned = false;
-  const LEVELS = [
-    [15, 'капельку?.. 🤏'],
-    [32, 'сильно'],
-    [50, 'очень сильно'],
-    [68, 'очень-очень-очень'],
-    [84, 'до Луны 🌙'],
-    [99, 'до Луны и обратно 🚀'],
-    [101, 'бесконечно ∞'],
-  ];
-  function render(v) {
-    range.style.setProperty('--v', v);
-    const txt = LEVELS.find(([lim]) => v < lim)[1];
-    if (label.textContent !== txt) label.textContent = txt;
-    label.classList.toggle('infinite', v >= 99);
-    scene?.setWarmth(0.06 + v / 100 * 0.25);
-  }
-  range.addEventListener('input', () => {
-    let v = +range.value;
-    if (v < max) {
-      range.value = max; v = max;
-      if (!warned) { warned = true; say(fb, 'А назад нельзя — моя любовь только растёт 😌'); audio.soft(); }
-    }
-    max = v;
-    render(v);
-    if (v >= 99 && !solved.has(2)) {
-      range.value = 100; render(100);
-      range.disabled = true;
-      solve(2, 'Правильно. И ещё чуть-чуть сверху — каждый день ❤');
-    }
-  });
-  range.addEventListener('change', () => {
-    if (!solved.has(2) && +range.value < 99) say(fb, 'Мало! Тяни до самого конца 😉');
-  });
-  render(+range.value);
-};
-
-/* ---- 3. What I love most (every answer is right) ---- */
-ENTER[3] = (scr) => {
-  const opts = $$('.opt', scr);
-  opts.forEach((o) => o.addEventListener('click', async () => {
-    if (solved.has(3) || scr.dataset.busy) return;
-    scr.dataset.busy = '1';
-    o.classList.add('lit');
-    audio.soft();
-    say($('#allFb', scr), 'Правильно! Но подожди…');
-    await sleep(700);
-    for (const other of opts) {
-      if (other === o) continue;
-      other.classList.add('lit');
-      scene?.pulse(0.3);
-      await sleep(380);
-    }
-    solve(3, 'Хитрый вопрос: правильные — все ответы. Я люблю в тебе всё ❤');
-  }));
-};
-
-/* ---- 4. Pets' names ---- */
-ENTER[4] = (scr) => {
-  const PETS = {
-    cat: { answer: 'Кот', options: ['Барсик', 'Кот', 'Мурзик', 'Пушок'], happy: 'Мур-р-р ❤', wrong: (n) => `Мяу?! Я не ${n} 😾` },
-    dog: { answer: 'Коди', options: ['Рекс', 'Шарик', 'Коди', 'Бобик'], happy: 'Гав-гав! ❤', wrong: (n) => `Р-р-гав! Какой ещё ${n}? 🐶` },
-  };
-  const fb = $('#petsFb', scr);
-  let done = 0;
-  $$('.chips', scr).forEach((box) => {
-    const conf = PETS[box.dataset.pet];
-    const pet = box.closest('.pet');
-    const bubble = $('.bubble', pet);
-    const plate = $('.plate', pet);
-    let bubbleTimer;
-    const speak = (t) => {
-      bubble.textContent = t;
-      bubble.classList.add('show');
-      clearTimeout(bubbleTimer);
-      bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 2200);
-    };
-    shuffle([...conf.options]).forEach((name) => {
-      const c = document.createElement('button');
-      c.type = 'button';
-      c.className = 'chip';
-      c.textContent = name;
-      c.addEventListener('click', () => {
-        if (pet.classList.contains('happy')) return;
-        if (name === conf.answer) {
-          c.classList.add('right');
-          pet.classList.add('happy');
-          plate.textContent = name;
-          speak(conf.happy);
-          const r = pet.getBoundingClientRect();
-          burst(r.left + r.width / 2, r.top + r.height / 3, 10);
-          scene?.pulse(0.5);
-          done++;
-          if (done === 1) { audio.soft(); say(fb, 'Один хвостик подписан!'); }
-          if (done === 2) solve(4, 'Кот и Коди — наши любимые пушистые дети ❤');
-        } else {
-          c.classList.add('wrong');
-          pet.classList.remove('sad'); void pet.offsetWidth; pet.classList.add('sad');
-          speak(conf.wrong(name));
-          audio.soft();
-        }
-      });
-      box.appendChild(c);
-    });
-  });
-};
-
-/* ---- 5. Paws ---- */
-ENTER[5] = (scr) => {
-  const row = $('#pawRow', scr);
-  const out = $('#pawCount', scr);
-  const fb = $('#pawFb', scr);
-  const check = $('#pawCheck', scr);
-  const PAW = '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="16.2" rx="5.2" ry="4.3"/><ellipse cx="5.6" cy="10.2" rx="2.2" ry="2.6"/><ellipse cx="9.6" cy="6.2" rx="2.2" ry="2.7"/><ellipse cx="14.4" cy="6.2" rx="2.2" ry="2.7"/><ellipse cx="18.4" cy="10.2" rx="2.2" ry="2.6"/></svg>';
-  let n = 0;
-  const set = (v) => {
-    n = Math.max(0, Math.min(16, v));
-    out.textContent = n;
-    while (row.children.length < n) row.insertAdjacentHTML('beforeend', PAW);
-    while (row.children.length > n) row.lastElementChild.remove();
-  };
-  $('#pawMinus', scr).addEventListener('click', () => !solved.has(5) && set(n - 1));
-  $('#pawPlus', scr).addEventListener('click', () => !solved.has(5) && set(n + 1));
-  check.addEventListener('click', () => {
-    if (solved.has(5)) return;
-    if (n === 8) {
-      check.hidden = true;
-      solve(5, 'Восемь лапок и два хвоста — наша пушистая банда 🐾');
-      return;
-    }
-    audio.soft();
-    if (n === 0) say(fb, 'Ноль лапок? Как же они тогда прибегут обниматься? 🙂');
-    else if (n === 4) say(fb, 'Это лапки только одного из них 😊 А второй?');
-    else if (n === 12) say(fb, 'Ты посчитала и наши с тобой ноги? 😄 Только лапки!');
-    else if (n > 8) say(fb, 'Многовато! У нас не сороконожка 😄');
-    else say(fb, 'Маловато… Кот — четыре лапки, Коди — …?');
-  });
-  set(0);
-};
-
-/* ---- 6. The happiest day ---- */
-ENTER[6] = (scr) => {
+/* ---- 2. The happiest day ---- */
+ENTER[DATE] = (scr) => {
   const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
   const today = new Date();
   const Y_MIN = 2005, Y_MAX = today.getFullYear() + 1;
@@ -378,7 +235,7 @@ ENTER[6] = (scr) => {
     wheels[part] = w;
     const win = $('.win', w);
     const bump = (dir) => {
-      if (solved.has(6)) return;
+      if (solved.has(DATE)) return;
       const [lo, hi] = range[part]();
       val[part] = wrap(val[part] + dir, lo, hi);
       if (part !== 'd') val.d = Math.min(val.d, dim(val.m, val.y));
@@ -438,7 +295,7 @@ ENTER[6] = (scr) => {
   ];
 
   check.addEventListener('click', () => {
-    if (solved.has(6)) return;
+    if (solved.has(DATE)) return;
     const okD = val.d === WEDDING.d, okM = val.m === WEDDING.m, okY = val.y === WEDDING.y;
     if (okD && okM && okY) {
       live = true; render();
@@ -447,7 +304,7 @@ ENTER[6] = (scr) => {
       rings.classList.add('hot');
       bar.style.setProperty('--w', '1');
       scene?.setWarmth(1);
-      solve(6, 'Да. 26 августа 2017 — наша свадьба. Самый счастливый день в моей жизни 💍');
+      solve(DATE, 'Да. 26 августа 2017 — наша свадьба. Самый счастливый день в моей жизни 💍');
       return;
     }
     attempts++;
